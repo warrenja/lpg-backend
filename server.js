@@ -1,17 +1,23 @@
-const express = require('express');
-const connectDB = require('./db');
+const express = require("express");
+const cors = require("cors");  // make sure this is imported
+const connectDB = require("./db");
 const app = express();
 
 connectDB();
 
+app.use(cors());  // add this line
 app.use(express.json());
 
-// Import orders routes
-const ordersRoute = require('./routes/orders');
-app.use('/orders', ordersRoute);
+// routes
+const ordersRoute = require("./routes/orders");
+app.use("/orders", ordersRoute);
 
-app.get('/', (req, res) => {
-  res.send('🔥 Backend working!');
+const receiptsRoute = require("./routes/receipts");
+app.use("/receipts", receiptsRoute);
+
+
+app.get("/", (req, res) => {
+  res.send("🔥 Backend working!");
 });
 
 const PORT = process.env.PORT || 3000;

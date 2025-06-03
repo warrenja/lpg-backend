@@ -4,12 +4,10 @@ const router = express.Router();
 let orders = [];
 let orderIdCounter = 1;
 
-// GET all orders
 router.get("/", (req, res) => {
   res.json(orders);
 });
 
-// POST new order
 router.post("/", (req, res) => {
   const { customerId, customer, item, amount } = req.body;
 
@@ -27,7 +25,7 @@ router.post("/", (req, res) => {
     assignedDriver: null,
   };
 
-  orders.unshift(newOrder); // add to beginning
+  orders.unshift(newOrder);
   res.status(201).json(newOrder);
 });
 
