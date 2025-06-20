@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const deliveries = require("./deliveriesMemory"); // shared memory array
+const deliveries = require("./deliveriesMemory");
 
 let orders = [];
 let orderIdCounter = 1;
@@ -32,7 +32,19 @@ router.post("/", (req, res) => {
   res.status(201).json(newOrder);
 });
 
-// Update order status and auto-create delivery if needed
+// Assign driver
+router.patch("/:id/driver", (req, res) => {
+  const orderId = parseInt(req.params.id);
+  const { driver } = req.body;
+
+  const order = orders.find((o) => o.id === orderId);
+  if (!order) return res.status(404).json({ message: "Order not found" });
+
+  order.assignedDriver = driver;
+  res.json(order);
+});
+
+// Update order status and create delivery if possible
 router.patch("/:id/status", (req, res) => {
   const orderId = parseInt(req.params.id);
   const { status } = req.body;
@@ -42,35 +54,23 @@ router.patch("/:id/status", (req, res) => {
 
   order.status = status;
 
-  // Auto-create delivery if driver is assigned and status is not Pending
+  // Check if assigned driver exists and status is not pending
   if (order.assignedDriver && status !== "Pending") {
-    const alreadyDelivered = deliveries.some((d) => d.orderId === order.id);
-    if (!alreadyDelivered) {
+    const deliveryExists = deliveries.some((d) => d.orderId === order.id);
+    if (!deliveryExists) {
       deliveries.push({
         id: deliveries.length + 1,
         orderId: order.id,
         customer: order.customer,
-        address: "Unknown", // Optional: Replace with real address if you collect it later
+        address: "Unknown", // Update later if needed
         item: order.item,
         driver: order.assignedDriver,
-        status: status,
+        status,
         assignedAt: new Date().toISOString(),
       });
     }
   }
 
-  res.json(order);
-});
-
-// Assign driver to order
-router.patch("/:id/driver", (req, res) => {
-  const orderId = parseInt(req.params.id);
-  const { driver } = req.body;
-
-  const order = orders.find((o) => o.id === orderId);
-  if (!order) return res.status(404).json({ message: "Order not found" });
-
-  order.assignedDriver = driver;
   res.json(order);
 });
 
