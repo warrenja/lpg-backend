@@ -1,11 +1,11 @@
 const express = require("express");
-const cors = require("cors");  // make sure this is imported
+const cors = require("cors");
 const connectDB = require("./db");
 const app = express();
 
 connectDB();
 
-app.use(cors());  // add this line
+app.use(cors());
 app.use(express.json());
 
 app.get("/healthcheck", (req, res) => {
@@ -14,11 +14,16 @@ app.get("/healthcheck", (req, res) => {
 
 // routes
 const ordersRoute = require("./routes/orders");
-app.use("/orders", ordersRoute);
-
 const receiptsRoute = require("./routes/receipts");
-app.use("/receipts", receiptsRoute);
+const salesRoute = require("./routes/sales");
+const deliveriesRoute = require("./routes/deliveries");
+const reportsRoute = require("./routes/reports");
 
+app.use("/orders", ordersRoute);
+app.use("/receipts", receiptsRoute);
+app.use("/sales", salesRoute);
+app.use("/deliveries", deliveriesRoute);
+app.use("/reports", reportsRoute);
 
 app.get("/", (req, res) => {
   res.send("🔥 Backend working!");
@@ -26,5 +31,5 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
- console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
