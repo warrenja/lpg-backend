@@ -1,45 +1,30 @@
+// routes/receipts.js
 const express = require("express");
 const router = express.Router();
+const Receipt = require("../models/Receipt");
+const Order = require("../models/Order");
 
-// Mock user middleware (for testing only)
-// Pretend every request comes from an admin user
-router.use((req, res, next) => {
-  req.user = { id: 1, role: "admin", name: "Admin User" };
-  next();
-});
+// POST /api/receipts/generate
+router.post("/generate", async (req, res) => {
+  const { orderId } = req.body;
+  try {
+    const order = await Order.findById(orderId);
+    if (!order || order.status !== "Delivered") {
+      return res.status(400).json({ message: "Order not delivered or not found" });
+    }
 
-// Middleware to check if user is admin
-function isAdmin(req, res, next) {
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied: Admins only" });
+    const receipt = new Receipt({
+      orderId: order._id,
+      customerName: order.customerName,
+      items: order.items,
+      totalAmount: order.totalAmount,
+    });
+
+    await receipt.save();
+    res.status(201).json(receipt);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to generate receipt", error: err.message });
   }
-  next();
-}
-
-let receipts = [];
-let receiptId = 1;
-
-router.get("/", (req, res) => {
-  res.json(receipts);
-});
-
-// Only admins can create receipts
-router.post("/", isAdmin, (req, res) => {
-  const { orderId, customer, amount, paymentMethod } = req.body;
-  if (!orderId || !customer || !amount || !paymentMethod) {
-    return res.status(400).json({ message: "Missing fields" });
-  }
-
-  const receipt = {
-    id: receiptId++,
-    orderId,
-    customer,
-    amount,
-    paymentMethod,
-    date: new Date().toISOString(),
-  };
-  receipts.unshift(receipt);
-  res.status(201).json(receipt);
 });
 
 module.exports = router;

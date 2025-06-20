@@ -3,8 +3,10 @@ const cors = require("cors");
 const connectDB = require("./db");
 const app = express();
 
+// Connect to MongoDB
 connectDB();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -19,16 +21,17 @@ const receiptsRoute = require("./routes/receipts");
 const salesRoute = require("./routes/sales");
 const deliveriesRoute = require("./routes/deliveries");
 const reportsRoute = require("./routes/reports");
-const usersRoute = require("./routes/users"); // 👈 Added for fetching drivers
+const usersRoute = require("./routes/users");
 
-app.use("/orders", ordersRoute);
-app.use("/receipts", receiptsRoute);
-app.use("/sales", salesRoute);
-app.use("/deliveries", deliveriesRoute);
-app.use("/reports", reportsRoute);
-app.use("/users", usersRoute); // 👈 Registered users route
+// Use API route prefixes
+app.use("/api/orders", ordersRoute);
+app.use("/api/receipts", receiptsRoute);
+app.use("/api/sales", salesRoute);
+app.use("/api/deliveries", deliveriesRoute);
+app.use("/api/reports", reportsRoute);
+app.use("/api/users", usersRoute);
 
-// Root
+// Root route
 app.get("/", (req, res) => {
   res.send("🔥 Backend working!");
 });
