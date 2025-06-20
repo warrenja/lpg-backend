@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const deliveries = require("./deliveriesMemory");
+const Delivery = require("../models/Delivery");
 
 let orders = [];
 let orderIdCounter = 1;
@@ -44,8 +44,8 @@ router.patch("/:id/driver", (req, res) => {
   res.json(order);
 });
 
-// Update status & auto-create delivery
-router.patch("/:id/status", (req, res) => {
+// Update order status & auto-create delivery in DB
+router.patch("/:id/status", async (req, res) => {
   const orderId = parseInt(req.params.id);
   const { status } = req.body;
 
@@ -54,23 +54,30 @@ router.patch("/:id/status", (req, res) => {
 
   order.status = status;
 
-  if (order.assignedDriver && status !== "Pending") {
-    const deliveryExists = deliveries.some(d => d.orderId === order.id);
-    if (!deliveryExists) {
-      deliveries.push({
-        id: deliveries.length + 1,
-        orderId: order.id,
-        customer: order.customer,
-        address: "Unknown",
-        item: order.item,
-        driver: order.assignedDriver,
-        status,
-        assignedAt: new Date().toISOString(),
-      });
-    }
-  }
+  try {
+    if (order.assignedDriver && status !== "Pending") {
+      // Check if delivery already exists in DB
+      const existing = await Delivery.findOne({ orderId: order.id });
+      if (!existing) {
+        const newDelivery = new Delivery({
+          orderId: order.id,
+          customer: order.customer,
+          address: "Unknown", // Update if needed
+          item: order.item,
+          driver: order.assignedDriver,
+          status,
+        });
 
-  res.json(order);
+        await newDelivery.save();
+        console.log(`✅ Delivery created for order ${order.id}`);
+      }
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error("Error creating delivery:", err);
+    res.status(500).json({ message: "Error creating delivery" });
+  }
 });
 
 module.exports = router;
