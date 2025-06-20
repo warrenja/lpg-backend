@@ -2,7 +2,8 @@ const mongoose = require("mongoose");
 
 const deliverySchema = new mongoose.Schema({
   orderId: {
-    type: Number,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Order",
     required: true,
   },
   customer: {
