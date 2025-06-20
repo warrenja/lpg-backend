@@ -1,10 +1,11 @@
+// models/Delivery.js
 const mongoose = require("mongoose");
 
 const deliverySchema = new mongoose.Schema({
   orderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Order",
+    type: mongoose.Schema.Types.ObjectId, // <-- FIXED: now matches Order _id
     required: true,
+    ref: "Order"
   },
   customer: {
     type: String,
