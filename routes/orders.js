@@ -44,7 +44,7 @@ router.patch("/:id/driver", (req, res) => {
   res.json(order);
 });
 
-// Update order status and create delivery if possible
+// Update status & auto-create delivery
 router.patch("/:id/status", (req, res) => {
   const orderId = parseInt(req.params.id);
   const { status } = req.body;
@@ -54,15 +54,14 @@ router.patch("/:id/status", (req, res) => {
 
   order.status = status;
 
-  // Check if assigned driver exists and status is not pending
   if (order.assignedDriver && status !== "Pending") {
-    const deliveryExists = deliveries.some((d) => d.orderId === order.id);
+    const deliveryExists = deliveries.some(d => d.orderId === order.id);
     if (!deliveryExists) {
       deliveries.push({
         id: deliveries.length + 1,
         orderId: order.id,
         customer: order.customer,
-        address: "Unknown", // Update later if needed
+        address: "Unknown",
         item: order.item,
         driver: order.assignedDriver,
         status,
