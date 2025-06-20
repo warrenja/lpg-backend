@@ -23,13 +23,13 @@ const deliveriesRoute = require("./routes/deliveries");
 const reportsRoute = require("./routes/reports");
 const usersRoute = require("./routes/users");
 
-// Use API route prefixes
-app.use("/api/orders", ordersRoute);
-app.use("/api/receipts", receiptsRoute);
-app.use("/api/sales", salesRoute);
-app.use("/api/deliveries", deliveriesRoute);
-app.use("/api/reports", reportsRoute);
-app.use("/api/users", usersRoute);
+// Use routes (no /api prefix)
+app.use("/orders", ordersRoute);
+app.use("/receipts", receiptsRoute);
+app.use("/sales", salesRoute);
+app.use("/deliveries", deliveriesRoute);
+app.use("/reports", reportsRoute);
+app.use("/users", usersRoute);
 
 // Root route
 app.get("/", (req, res) => {
