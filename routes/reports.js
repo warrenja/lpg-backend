@@ -1,3 +1,4 @@
+// routes/reports.js
 const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
@@ -28,8 +29,9 @@ router.get("/", async (req, res) => {
     orders.forEach((order) => {
       const status = order.status || "Unknown";
 
-      // Convert string amount (e.g., "KSh 1500") to number
-      const amountNum = parseInt(order.amount.replace(/[^\d]/g, "") || "0", 10);
+      // Safely parse amount
+      const rawAmount = order.amount || "KSh 0";
+      const amountNum = parseInt(String(rawAmount).replace(/[^\d]/g, ""), 10);
       totalRevenue += amountNum;
 
       if (!grouped[status]) grouped[status] = [];
