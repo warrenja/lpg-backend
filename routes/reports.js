@@ -3,36 +3,49 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
 
-// Helper to filter by date range
-const filterByDate = (orders, range) => {
-  const now = new Date();
-  let from;
-
-  if (range === "weekly") from = new Date(now.setDate(now.getDate() - 7));
-  else if (range === "monthly") from = new Date(now.setMonth(now.getMonth() - 1));
-  else if (range === "yearly") from = new Date(now.setFullYear(now.getFullYear() - 1));
-  else from = new Date(0); // all time
-
-  return orders.filter((o) => new Date(o.createdAt) >= from);
+// Utility: Convert amount string (e.g. "KSh 1500") to number
+const parseAmount = (str) => {
+  if (!str) return 0;
+  const num = parseInt(String(str).replace(/[^\d]/g, ""), 10);
+  return isNaN(num) ? 0 : num;
 };
 
+// GET /reports?range=weekly|monthly|yearly OR ?from=YYYY-MM-DD&to=YYYY-MM-DD
 router.get("/", async (req, res) => {
-  const { range } = req.query;
+  const { range, from, to } = req.query;
+
   try {
     let orders = await Order.find().sort({ createdAt: -1 });
 
-    if (range) orders = filterByDate(orders, range);
+    // Filter by predefined range
+    if (range) {
+      const now = new Date();
+      let fromDate = new Date(0);
+
+      if (range === "weekly") fromDate = new Date(now.setDate(now.getDate() - 7));
+      else if (range === "monthly") fromDate = new Date(now.setMonth(now.getMonth() - 1));
+      else if (range === "yearly") fromDate = new Date(now.setFullYear(now.getFullYear() - 1));
+
+      orders = orders.filter((o) => new Date(o.createdAt) >= fromDate);
+    }
+
+    // Filter by custom date range
+    if (from || to) {
+      const fromDate = from ? new Date(from) : new Date(0);
+      const toDate = to ? new Date(to) : new Date();
+      orders = orders.filter((o) => {
+        const createdAt = new Date(o.createdAt);
+        return createdAt >= fromDate && createdAt <= toDate;
+      });
+    }
 
     let totalRevenue = 0;
     const grouped = {};
 
     orders.forEach((order) => {
       const status = order.status || "Unknown";
-
-      // Safely parse amount
-      const rawAmount = order.amount || "KSh 0";
-      const amountNum = parseInt(String(rawAmount).replace(/[^\d]/g, ""), 10);
-      totalRevenue += amountNum;
+      const amount = parseAmount(order.amount);
+      totalRevenue += amount;
 
       if (!grouped[status]) grouped[status] = [];
 
@@ -47,13 +60,16 @@ router.get("/", async (req, res) => {
     });
 
     res.json({
-      range: range || "all-time",
+      range: range || `${from || "all"} to ${to || "now"}`,
       totalOrders: orders.length,
       totalRevenue,
       groupedByStatus: grouped,
     });
   } catch (err) {
-    res.status(500).json({ message: "Failed to generate report", error: err.message });
+    res.status(500).json({
+      message: "Failed to generate report",
+      error: err.message,
+    });
   }
 });
 
