@@ -1,4 +1,3 @@
-// routes/reports.js
 const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
@@ -8,7 +7,11 @@ router.get("/", async (req, res) => {
     const orders = await Order.find();
 
     const totalOrders = orders.length;
-    const totalSales = orders.reduce((sum, o) => sum + parseInt(o.amount.replace(/[^\d]/g, '')), 0);
+
+    const totalSales = orders.reduce((sum, o) => {
+      const amount = o.amount || "0";
+      return sum + parseInt(amount.replace(/[^\d]/g, ""));
+    }, 0);
 
     const statusCount = orders.reduce((acc, o) => {
       acc[o.status] = (acc[o.status] || 0) + 1;
