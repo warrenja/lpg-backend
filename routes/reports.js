@@ -1,30 +1,34 @@
+// routes/reports.js
 const express = require("express");
 const router = express.Router();
+const Order = require("../models/Order");
 
-// Reuse same sales and orders data
-const sales = require("./sales").sales; // If exported
-const orders = require("./orders").orders;
+router.get("/", async (req, res) => {
+  try {
+    const orders = await Order.find();
 
-router.get("/summary", (req, res) => {
-  const locationMap = {};
-  const itemMap = {};
-  const statusMap = { Delivered: 0, Pending: 0 };
+    const totalOrders = orders.length;
+    const totalSales = orders.reduce((sum, o) => sum + parseInt(o.amount.replace(/[^\d]/g, '')), 0);
 
-  orders.forEach(order => {
-    const location = order.location || "Unknown";
-    const item = order.item;
-    const status = order.status;
+    const statusCount = orders.reduce((acc, o) => {
+      acc[o.status] = (acc[o.status] || 0) + 1;
+      return acc;
+    }, {});
 
-    locationMap[location] = (locationMap[location] || 0) + 1;
-    itemMap[item] = (itemMap[item] || 0) + 1;
-    statusMap[status] = (statusMap[status] || 0) + 1;
-  });
+    const itemCount = orders.reduce((acc, o) => {
+      acc[o.item] = (acc[o.item] || 0) + 1;
+      return acc;
+    }, {});
 
-  res.json({
-    locations: Object.entries(locationMap).map(([name, orders]) => ({ name, orders })),
-    inventory: Object.entries(itemMap).map(([item, count]) => ({ item, count })),
-    statuses: Object.entries(statusMap).map(([status, count]) => ({ status, count })),
-  });
+    res.json({
+      totalOrders,
+      totalSales,
+      statusCount,
+      itemCount,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to generate report", error: err.message });
+  }
 });
 
 module.exports = router;
